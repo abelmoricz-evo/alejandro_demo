@@ -117,6 +117,18 @@ Determination of the concentration of fungal spores (conidia or blastospores) in
     ddf['average_spore_of_middle_square'] = ddf['spore_per_square_replicate'].mean()
     st.write(ddf)
 
+    st.badge("so where does this data actually belong???", color='red')
+    product = st.text_input("what product are you performing the SOP for?")
+    st.write(f"product is: {product}")
+    ddf['product'] = product
+    ddf['SOP duration'] = ddf['timestamp'].max() - ddf['timestamp'].min()
+    ddf['SOP'] = "Determination of fungal conidia or blastospore concentration in liquid samples"
+    st.write("final data:")
+    st.write(ddf)
+    if st.button("upload to OFFLINE datastorage for further processing"):
+        ddf.to_sql("alejandro_test_product_specific", if_exists='replace', index=False, con=engine)
+        st.badge("successfully uploaded", color='green')
+
     #engine = create_engine(f"postgresql://postgres:DsRdPPJtetGDiMFypvHpUJUKAwEXfoSG@junction.proxy.rlwy.net:19704/PHOMA")
     #df.to_sql(f"alejandro_test", con=engine, index=False, if_exists='append')
     #st.write(df.head(3))
