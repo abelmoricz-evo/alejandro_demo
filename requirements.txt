@@ -3,3 +3,4 @@ python-dotenv
 sqlalchemy
 pandas
 numpy
+psycopg2-binary
