@@ -1,4 +1,7 @@
 import os
+import textwrap
+import inspect
+from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -6,18 +9,22 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from streamlit.logger import get_logger
 
+
+def show_code(demo):
+    show_code = st.sidebar.checkbox("Show code", True)  # """Showing the code of the demo."""
+    if show_code:
+        st.markdown("""<div style='margin-top:500px;'></div> 
+        <h1>the actual code making the page run</h1>""", unsafe_allow_html=True)  # Showing the code of the demo.
+        sourcelines, _ = inspect.getsourcelines(demo)
+        st.code(textwrap.dedent("".join(sourcelines[1:])), line_numbers=True)
+
+
+load_dotenv()
 st.set_page_config(layout='wide')
 
-def stream_data():
-    engine = create_engine(str(os.environ['PSQL']).replace('postgres://', 'postgresql://'))
-    df = pd.read_sql(f""" SELECT 
 
-            """, con=engine)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    return df
+def main_app():
 
-
-if __name__ == "__main__":
     st.header("Determination of fungal conidia or blastospore concentration in liquid samples ", divider='green')
 
     st.markdown("""
@@ -96,13 +103,27 @@ Determination of the concentration of fungal spores (conidia or blastospores) in
 
     dfs = []
     if st.button("finalize replicate run"):
-        dfs.append(df)
+        engine = create_engine(str(os.environ['PSQL']).replace('postgres://', 'postgresql://'))
+        df.to_sql("alejandro_test", if_exists='append', index=False, con=engine)
 
 
     st.header("data for ALL replicate", divider='grey')
-    ddf = pd.concat(dfs, axis=1)
-    st.dataframe(ddf)
+    engine = create_engine(str(os.environ['PSQL']).replace('postgres://', 'postgresql://'))
+    ddf = pd.read_sql(f""" SELECT 
+            * from alejandro_test
+            """, con=engine)
+    ddf['timestamp'] = pd.to_datetime(ddf['timestamp'])
+    ddf['spore_per_square_replicate'] = ddf['squares_counted'] / ddf['spores_counted']
+    ddf['average_spore_of_middle_square'] = ddf['spore_per_square_replicate'].mean()
+    st.write(ddf)
 
     #engine = create_engine(f"postgresql://postgres:DsRdPPJtetGDiMFypvHpUJUKAwEXfoSG@junction.proxy.rlwy.net:19704/PHOMA")
     #df.to_sql(f"alejandro_test", con=engine, index=False, if_exists='append')
     #st.write(df.head(3))
+
+if __name__ == "__main__":
+
+    main_app()
+
+    show_code(main_app)
+    
